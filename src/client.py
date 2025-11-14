@@ -89,32 +89,22 @@ def attack_des():
     response = submit_attack("des", result)
     print(f"    {response['message']}")
 
-##################### 1 ##############################
+##################### AES ################################################################
 def attack_aes():
-    """AES Attack with brute-force simulation + matplotlib visualization"""
+    #AES Attack 
     print_header("AES ATTACK")
 
-    # Get challenge
     challenge = get_challenge("aes")
     encrypted = challenge["encrypted_message"]
 
     print(f"\nEncrypted Message: {encrypted}")
     print("\n[*] Simulating AES brute-force...")
-
-    # -----------------------------------------
-    # Use your AESAttack class to simulate brute force
-    # -----------------------------------------
+    #AES Attack class
     aes_sim = AESAttack()
+    #simulate brute force attack function 
+    results = aes_sim.simulate_brute_force_attack(encrypted_message=encrypted,num_attempts=5000)
 
-    # Simulate 5,000 attempts for demonstration
-    results = aes_sim.simulate_brute_force_attack(
-        encrypted_message=encrypted,
-        num_attempts=5000
-    )
-
-    # -----------------------------
-    # PLOT RESULTS WITH MATPLOTLIB
-    # -----------------------------
+    #matplotlib plot
     attempts = results["attempts"]
     times = results["times"]
 
@@ -134,68 +124,41 @@ def attack_aes():
     response = submit_attack("aes", result)
     print(f"    {response['message']}")
 
-
-#def aes_encrypt(plaintext, key):
-#    #from Crypto.Cipher import AES
-#    cipher = AES.new(key, AES.MODE_EAX)   #cipher is AES cipher object
-#    #encrypt the plaintext and get the tag
-#    ciphertext, tag = cipher.encrypt_and_digest(plaintext.encode())
-#    return cipher.nonce.hex() + tag.hex() + ciphertext.hex() #return the concatenated hex string of nonce, tag, and ciphertext
-##############################################################
-
 class AESAttack:
     def __init__(self, cipher_key=None):
-        
+        #initialize AES attack instance
         self.cipher_key = cipher_key if cipher_key else get_random_bytes(16)
         self.attack_results = {
             'attempts': [],
             'times': [],
             'key_space_explored': []
         }
-
-    # -----------------------------------------
-    # Encrypt plaintext using AES-EAX
-    # -----------------------------------------
     def encrypt(self, plaintext):
+        #encrypt message
         print("\n[*] Encrypting the plaintext...")
-
         cipher = AES.new(self.cipher_key, AES.MODE_EAX)
         ciphertext, tag = cipher.encrypt_and_digest(plaintext.encode())
-
         print(f"    Plaintext:  {plaintext}")
         print(f"    Ciphertext: {ciphertext.hex()}")
-
         return cipher.nonce.hex() + tag.hex() + ciphertext.hex()
-
-    # -----------------------------------------
-    # Decrypt using AES-EAX
-    # -----------------------------------------
+    
     def decrypt(self, encrypted_message, cipher_key):
+        #decrypt messafe using the cipher key
         print("\n[*] Decrypting the ciphertext...")
-
-        nonce = bytes.fromhex(encrypted_message[:32])
-        tag = bytes.fromhex(encrypted_message[32:64])
+        nonce = bytes.fromhex(encrypted_message[:32]) #use nonce from encrypted message
+        tag = bytes.fromhex(encrypted_message[32:64])   #use tag from encrypted message
         ciphertext = bytes.fromhex(encrypted_message[64:])
-
-        cipher = AES.new(cipher_key, AES.MODE_EAX, nonce=nonce)
+        cipher = AES.new(cipher_key, AES.MODE_EAX, nonce=nonce)  #use nonce from encrypted message
         plaintext = cipher.decrypt_and_verify(ciphertext, tag)
-
-        print(f"    Ciphertext: {ciphertext.hex()}")
+        print(f"    Ciphertext: {ciphertext.hex()}")   #isplay ciphertext in hex
         print(f"    Plaintext:  {plaintext.decode()}")
-
         return plaintext.decode()
-
-    # -----------------------------------------
-    # AES-128 brute force simulation
-    # -----------------------------------------
     def simulate_brute_force_attack(self, encrypted_message, num_attempts=10000):
         print_header("AES BRUTE FORCE ATTACK SIMULATION")
-
-        print(f"\n[*] Target ciphertext start: {encrypted_message[:32]}...")
+        print(f"\n[*] Target ciphertext start: {encrypted_message[:32]}...")  
         print(f"[*] Performing {num_attempts:,} brute-force attempts...")
         print(f"[*] AES-128 keyspace: 2^128 = 3.4 × 10^38 keys\n")
-
-        nonce = bytes.fromhex(encrypted_message[:32])
+        nonce = bytes.fromhex(encrypted_message[:32])#
         tag = bytes.fromhex(encrypted_message[32:64])
         ciphertext = bytes.fromhex(encrypted_message[64:])
 
@@ -205,15 +168,14 @@ class AESAttack:
         success = False
 
         for i in range(num_attempts):
-
-            # Generate random AES-128 key
+            #generate random 128-bit key for brute force attempt
             random_key = get_random_bytes(16)
-
-            # Time one brute-force attempt
+            #set timer for brute force attack
             start = time.perf_counter()
-
             try:
+                #attempt decryption with the random key
                 cipher = AES.new(random_key, AES.MODE_EAX, nonce=nonce)
+                #check if decryption is successful with the random key and the ciphertext
                 cipher.decrypt_and_verify(ciphertext, tag)
 
                 success = True
@@ -221,18 +183,18 @@ class AESAttack:
                 break
 
             except Exception:
-                pass  # Wrong key
+                pass  #wrong key
 
             elapsed = time.perf_counter() - start
 
             attempts.append(i + 1)
-            times.append(elapsed * 1000)  # convert to ms
+            times.append(elapsed * 1000)  #convert to ms
 
             if (i + 1) % 1000 == 0:
                 avg = sum(times) / len(times)
                 print(f"    Attempt {i+1:,}: Avg {avg:.4f} ms per attempt")
 
-        # Compute statistics
+        #MATPLOTLIB PLOTTING
         total_time = sum(times)
         avg_time = total_time / len(times)
 
@@ -250,7 +212,6 @@ class AESAttack:
             print(f"    Keys/sec: {keys_per_second:,.0f}")
             print(f"    Estimated crack time: {years:.2e} years")
             print("    AES-128 is effectively unbreakable by brute force.\n")
-
         self.attack_results = {
             'attempts': attempts,
             'times': times,
@@ -258,7 +219,6 @@ class AESAttack:
             'total_time': total_time,
             'success': success
         }
-
         return self.attack_results
 
 
