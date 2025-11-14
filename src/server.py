@@ -5,6 +5,7 @@ Simple server for testing encryption algorithm attacks
 """
 
 from flask import Flask, request, jsonify
+from Crypto.Cipher import AES
 
 app = Flask(__name__)
 

@@ -6,6 +6,7 @@ Client for testing encryption attacks
 
 import requests
 import json
+from Crypto.Cipher import AES
 
 SERVER_URL = "http://localhost:5001"
 
@@ -106,6 +107,14 @@ def attack_aes():
     print(f"\n[*] Submitting result: {result}")
     response = submit_attack("aes", result)
     print(f"    {response['message']}")
+
+
+def aes_encrypt(plaintext, key):
+    #from Crypto.Cipher import AES
+    cipher = AES.new(key, AES.MODE_EAX)   #cipher is AES cipher object
+    #encrypt the plaintext and get the tag
+    ciphertext, tag = cipher.encrypt_and_digest(plaintext.encode())
+    return cipher.nonce.hex() + tag.hex() + ciphertext.hex() #return the concatenated hex string of nonce, tag, and ciphertext
 
 
 # ============================================
