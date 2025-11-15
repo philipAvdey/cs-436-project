@@ -5,6 +5,26 @@ Simple server for testing encryption algorithm attacks
 """
 
 from flask import Flask, request, jsonify
+from Crypto.Cipher import DES
+from Crypto.Util.Padding import pad, unpad
+import random
+
+last_byte = random.randint(0, 255)
+DES_KEY = b"8byteke" + bytes([last_byte])  # 8-byte key for DES (56 bits)
+print(f"[Server] Using DES key: {DES_KEY.hex()} (last byte = {last_byte})")
+
+def encrypt_des_message(plaintext: str) -> str:
+    """Encrypt plaintext using DES (ECB mode)"""
+    cipher = DES.new(DES_KEY, DES.MODE_ECB)
+    padded = pad(plaintext.encode(), DES.block_size)
+    return cipher.encrypt(padded).hex()
+
+def decrypt_des_message(ciphertext_hex: str) -> str:
+    """Decrypt hex-encoded ciphertext using DES"""
+    cipher = DES.new(DES_KEY, DES.MODE_ECB)
+    ciphertext = bytes.fromhex(ciphertext_hex)
+    decrypted = unpad(cipher.decrypt(ciphertext), DES.block_size)
+    return decrypted.decode()
 
 app = Flask(__name__)
 
@@ -18,8 +38,9 @@ challenges = {
     },
     "des": {
         "algorithm": "DES",
-        "encrypted_message": "8A7B3C2D1E4F5A6B",
-        "secret": "HELLO"
+        "encrypted_message": encrypt_des_message("HELLO"),
+        "secret": "HELLO",
+        "last_byte": last_byte
     },
     "aes": {
         "algorithm": "AES",
@@ -27,7 +48,6 @@ challenges = {
         "secret": "SECRET"
     }
 }
-
 
 @app.route('/')
 def home():
