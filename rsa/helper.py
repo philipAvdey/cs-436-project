@@ -16,16 +16,11 @@ first_primes_list = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29,
 def nBitRandom(n):
     return random.randrange(2**(n-1)+1, 2**n - 1)
 
-
+# gets a prime number using a well known algorithm, miller-rabin
 def getLowLevelPrime(n):
-    '''Generate a prime candidate divisible 
-    by first primes'''
     while True:
-        # Obtain a random number
         pc = nBitRandom(n)
 
-        # Test divisibility by pre-generated
-        # primes
         for divisor in first_primes_list:
             if pc % divisor == 0 and divisor**2 <= pc:
                 break
@@ -34,7 +29,6 @@ def getLowLevelPrime(n):
 
 
 def isMillerRabinPassed(mrc):
-    '''Run 20 iterations of Rabin Miller Primality test'''
     maxDivisionsByTwo = 0
     ec = mrc-1
     while ec % 2 == 0:
@@ -50,7 +44,6 @@ def isMillerRabinPassed(mrc):
                 return False
         return True
 
-    # Set number of trials here
     numberOfRabinTrials = 20
     for i in range(numberOfRabinTrials):
         round_tester = random.randrange(2, mrc)
@@ -66,26 +59,28 @@ def generate_prime():
             continue
         else:
             return prime_candidate
-        
+
+# helper function for gcd
+# returns (g, x, y) for ax + by = g = gcd(a,b,c)
 def egcd(a: int, b: int) -> Tuple[int,int,int]:
-    """Extended GCD. Returns (g, x, y) such that ax + by = g = gcd(a,b)."""
     if b == 0:
         return (a, 1, 0)
     else:
         g, x1, y1 = egcd(b, a % b)
         return (g, y1, x1 - (a // b) * y1)
-
+    
+# modulo inverse
 def modinv(a: int, m: int) -> int:
-    """Modular inverse of a modulo m."""
     g, x, _ = egcd(a, m)
     if g != 1:
         raise ValueError("modular inverse does not exist")
     return x % m
 
-
+# convert bytes to int
 def bytes_to_int(b: bytes) -> int:
     return int.from_bytes(b, byteorder='big')
 
+# convert int to bytes
 def int_to_bytes(i: int, length: int = None) -> bytes:
     if length is None:
         # compute minimal length
