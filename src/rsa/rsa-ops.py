@@ -63,11 +63,10 @@ def rsa_sign(message: bytes, d: int, n: int) -> bytes:
 # verify a signature
 # returns true or false based on whether it was verified successfully or not
 def rsa_verify(message: bytes, signature: bytes, e: int, n: int) -> bool:
-    h = hashlib.sha256(message).digest()
+    h_int = bytes_to_int(hashlib.sha256(message).digest())
     s_int = bytes_to_int(signature)
     m_int = pow(s_int, e, n)
-    recovered = int_to_bytes(m_int)
-    return bytes_to_int(recovered) == bytes_to_int(h)
+    return m_int == h_int
 
 # ---------- Example / quick tests ----------
 if __name__ == "__main__":
