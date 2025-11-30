@@ -7,6 +7,7 @@ Simple server for testing encryption algorithm attacks
 from flask import Flask, request, jsonify
 from Crypto.Cipher import DES
 from Crypto.Util.Padding import pad, unpad
+from Crypto.Cipher import AES
 import random
 
 last_byte = random.randint(0, 255)
@@ -28,6 +29,24 @@ def decrypt_des_message(ciphertext_hex: str) -> str:
 
 app = Flask(__name__)
 
+def aes16_encrypt(secret_val):
+    real_key = secret_val.to_bytes(2, 'big')  #convert to 2 byte key
+    key = real_key * 8                        #expand to repeated 2 byte key 8 times ; fit 16 byte AES 128 mold
+    plaintext = b"SECRET_SECRET?"         #plaintext to be encrypted      
+    cipher = AES.new(key, AES.MODE_GCM)                 #create AES cipher with key
+    ciphertext, tag = cipher.encrypt_and_digest(plaintext)          #use cipher on plain text for encryption and nonce value
+        #nonce for random vals for combination with key
+        #tag for auth in AES GCM
+        #ciphertext for encrpyted plaintext with 
+    return {
+        "nonce": cipher.nonce.hex(),  
+        "tag": tag.hex(),
+        "ciphertext": ciphertext.hex()}
+
+#######################AES global secret val#########################
+aes_secret = 65535
+aes_enc = aes16_encrypt(aes_secret)      #encrypt with screct val
+#######################################################################
 # Store encryption challenges
 challenges = {
     "rsa": {
@@ -43,9 +62,9 @@ challenges = {
         "last_byte": last_byte
     },
     "aes": {
-        "algorithm": "AES",
-        "encrypted_message": "5F9D2A8E3B7C1D4F",
-        "secret": "SECRET"
+         "algorithm": "AES8",
+        "encrypted_message": aes_enc,
+        "secret": aes_secret
     }
 }
 

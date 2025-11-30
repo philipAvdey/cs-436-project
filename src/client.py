@@ -9,6 +9,8 @@ import requests
 import json
 from Crypto.Cipher import DES
 from Crypto.Util.Padding import unpad
+import random
+from Crypto.Cipher import AES
 
 SERVER_URL = "http://localhost:5001"
 
@@ -135,29 +137,40 @@ def attack_des():
     response = submit_attack("des", final_result)
     print(f"    {response['message']}")
 
-
+##################### AES ATTACK ################################################################
 def attack_aes():
-    """AES Attack - Side channel attack"""
-    print_header("AES ATTACK")
-    
-    # Get challenge
-    challenge = get_challenge("aes")
-    encrypted = challenge['encrypted_message']
-    
-    print(f"\nEncrypted Message: {encrypted}")
-    
-    # YOUR ATTACK CODE HERE
-    print("\n[*] Attacking AES...")
-    print("    TODO: Implement AES attack")
-    
-    # Example: For demo
-    result = "SECRET"
-    
-    # Submit attack
-    print(f"\n[*] Submitting result: {result}")
-    response = submit_attack("aes", result)
-    print(f"    {response['message']}")
+    dat = get_challenge("aes")    #collect data from get_challenge 
 
+    #break down encrypted message################################
+    nonce = bytes.fromhex(dat["encrypted_message"]["nonce"]) 
+    tag = bytes.fromhex(dat["encrypted_message"]["tag"])
+    ciphertext = bytes.fromhex(dat["encrypted_message"]["ciphertext"])
+    ####################outputs###########################################
+    print("AES-16 Brute force attack")
+    print(f"Nonce:{nonce.hex()}")
+    print(f"Tag:{tag.hex()}")
+    print(f"Ciphertext:{ciphertext.hex()}")
+######################### actual attack################
+    for key_val in range(65536):    #loop through all possible combinations for AES 16 0 - 65536
+        #test each key val as the key
+        real_key = key_val.to_bytes(2, "big")   #big for most sig bytes sim 
+        full_key = real_key * 8                  #expand to 16 bytes
+        try:
+            cipher = AES.new(full_key, AES.MODE_GCM, nonce=nonce)       #create cipher with test key and nonce
+            plaintext = cipher.decrypt_and_verify(ciphertext, tag)         #collect plain text from cipher
+
+            print(f"KEY: {key_val}")
+            print(f"PLAINTEXT: {plaintext}")
+            payload_res = {"result": key_val}   #send payload for confirmation
+            resp = requests.post("http://localhost:5001/attack/aes", json=payload_res)
+            print(resp.json()["message"])
+            print("SUCCESS!!!!!!!!!!!!!!!!!!!!!!!")
+            return
+
+        except Exception:
+            continue
+
+    print("ATTACK FAILED")
 
 # ============================================
 # MAIN MENU
