@@ -9,7 +9,6 @@ import json
 import time
 import random
 from Crypto.Cipher import AES
-import requests
 
 SERVER_URL = "http://localhost:5001"
 
