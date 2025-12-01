@@ -1,4 +1,3 @@
-import random
 from typing import Tuple
 
 # convert bytes to int

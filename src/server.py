@@ -12,6 +12,7 @@ app = Flask(__name__)
 app.secret_key = secrets.token_hex(32)  # Required for sessions
 app.config['SESSION_PERMANENT'] = True
 
+# RSA secrets/variables
 rsa_secret = "HI"
 n = 40002400027
 e = 17
