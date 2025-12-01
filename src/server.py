@@ -3,12 +3,14 @@
 Encryption Testing Server
 Simple server for testing encryption algorithm attacks
 """
+import secrets
 
 from flask import Flask, request, jsonify
 from Crypto.Cipher import DES
 from Crypto.Util.Padding import pad, unpad
 from Crypto.Cipher import AES
 import random
+from rsa.rsa_ops import rsa_encrypt
 
 last_byte = random.randint(0, 255)
 DES_KEY = b"8byteke" + bytes([last_byte])  # 8-byte key for DES (56 bits)
@@ -28,6 +30,14 @@ def decrypt_des_message(ciphertext_hex: str) -> str:
     return decrypted.decode()
 
 app = Flask(__name__)
+app.secret_key = secrets.token_hex(32)  # Required for sessions
+app.config['SESSION_PERMANENT'] = True
+
+# RSA secrets/variables
+rsa_secret = "HI"
+n = 40002400027
+e = 17
+rsa_encrypted = rsa_encrypt(rsa_secret, e, n).hex()
 
 def aes16_encrypt(secret_val):
     real_key = secret_val.to_bytes(2, 'big')  #convert to 2 byte key
@@ -51,9 +61,9 @@ aes_enc = aes16_encrypt(aes_secret)      #encrypt with screct val
 challenges = {
     "rsa": {
         "algorithm": "RSA",
-        "public_key": {"n": 3233, "e": 17},
-        "encrypted_message": 2557,
-        "secret": 42
+        "public_key": {"n": n, "e": e},
+        "encrypted_message": rsa_encrypted,
+        "secret": "HI"
     },
     "des": {
         "algorithm": "DES",
@@ -79,7 +89,6 @@ def home():
             "/attack/<algorithm>": "Submit your attack"
         }
     })
-
 
 @app.route('/challenge/<algorithm>')
 def get_challenge(algorithm):
@@ -125,7 +134,6 @@ def submit_attack(algorithm):
             "status": "failed",
             "message": "✗ Incorrect. Try again!"
         })
-
 
 if __name__ == '__main__':
     print("\n" + "="*50)
