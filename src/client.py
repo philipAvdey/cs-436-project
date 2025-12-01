@@ -5,7 +5,10 @@ Client for testing encryption attacks
 """
 
 import requests
-import json
+
+from rsa.rsa_ops import rsa_decrypt
+from rsa.helper import modinv
+
 
 SERVER_URL = "http://localhost:5001"
 
@@ -37,29 +40,45 @@ def submit_attack(algorithm, result):
 # ============================================
 
 def attack_rsa():
-    """RSA Attack - Factor n to find private key"""
+    """RSA Attack - Factor n and decrypt message using rsa_ops functions"""
     print_header("RSA ATTACK")
-    
+
     # Get challenge
     challenge = get_challenge("rsa")
     n = challenge['public_key']['n']
     e = challenge['public_key']['e']
-    encrypted = challenge['encrypted_message']
-    
+    c_hex = challenge['encrypted_message']
+    c = bytes.fromhex(c_hex)
+
     print(f"\nPublic Key: n={n}, e={e}")
-    print(f"Encrypted Message: {encrypted}")
+    print(f"Encrypted Message: {c}")
+
+    print("\n[*] Factoring n...")
+
+    def factor(n):
+        for i in range(2, int(n**0.5) + 1):
+            if n % i == 0:
+                return i, n // i
+        return None, None
+
+    p, q = factor(n)
+    if p is None or q is None:
+        print(f"Error, p or q were not factored correctly")
+        return
+    print(f"Found factors: p={p}, q={q}")
+
+    phi = (p - 1) * (q - 1)
+    print(f"φ(n) = {phi}")
+
+    d = modinv(e, phi)
+    print(f"Private key d={d}")
+
+    m = rsa_decrypt(c, d, n)
+    print(f"Decrypted message: {m}")
     
-    # YOUR ATTACK CODE HERE
-    print("\n[*] Attacking RSA...")
-    print("    TODO: Factor n, calculate private key, decrypt message")
-    
-    # Example: For demo, we'll just use the answer
-    result = 42
-    
-    # Submit attack
-    print(f"\n[*] Submitting result: {result}")
-    response = submit_attack("rsa", result)
-    print(f"    {response['message']}")
+    print("\n[*] Submitting result...")
+    response = submit_attack("rsa", m)
+    print(f"{response['message']}")
 
 
 def attack_des():
@@ -82,7 +101,7 @@ def attack_des():
     # Submit attack
     print(f"\n[*] Submitting result: {result}")
     response = submit_attack("des", result)
-    print(f"    {response['message']}")
+    print(f"{response['message']}")
 
 
 def attack_aes():
@@ -105,7 +124,7 @@ def attack_aes():
     # Submit attack
     print(f"\n[*] Submitting result: {result}")
     response = submit_attack("aes", result)
-    print(f"    {response['message']}")
+    print(f"{response['message']}")
 
 
 # ============================================
